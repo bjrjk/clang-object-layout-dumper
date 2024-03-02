@@ -44,28 +44,21 @@ public:
                      std::map<std::string, std::string> &ParsedArgs)
       : Instance(Instance), ParsedArgs(ParsedArgs) {}
 
-  struct Visitor : public RecursiveASTVisitor<Visitor> {
-    std::set<RecordDecl *> RecordDeclSet;
-
-    Visitor() {}
-
-    bool VisitRecordDecl(RecordDecl *RD) {
-      RD = RD->getDefinition();
-      if (RD && !RD->isInvalidDecl() && RD->isCompleteDefinition())
-        RecordDeclSet.insert(RD);
-      return true;
-    }
-  };
-
-  void HandleTranslationUnit(ASTContext &context) override {
-    Visitor visitor;
-    visitor.TraverseDecl(context.getTranslationUnitDecl());
-
-    std::string filter = ParsedArgs["filter"];
-    for (RecordDecl *RD : visitor.RecordDeclSet) {
+  void HandleTagDeclDefinition(TagDecl *D) override {
+    if (RecordDecl *RD = llvm::dyn_cast<RecordDecl>(D)) {
+      auto &context = Instance.getASTContext();
+      std::string filter = ParsedArgs["filter"];
       std::string qualifiedName = RD->getQualifiedNameAsString();
       if (filter != "" && qualifiedName.find(filter) == std::string::npos)
-        continue;
+        return;
+      // Temporary workaround for
+      // https://github.com/llvm/llvm-project/issues/83671
+      if (CXXRecordDecl *CRD = llvm::dyn_cast<CXXRecordDecl>(RD)) {
+        for (auto &base : CRD->bases()) {
+          if (base.getType()->getAsCXXRecordDecl() == nullptr)
+            return;
+        }
+      }
       llvm::errs() << "------ Record Decl: " << qualifiedName << "\n";
       context.DumpRecordLayout(RD, llvm::errs());
     }
@@ -101,7 +94,8 @@ protected:
         std::string filter = arg.substr(9);
         ParsedArgs["filter"] = filter;
         if (ParsedArgs["verbose"] == "true")
-          llvm::errs() << "ParseArgs: Qualified name filter is " << filter << "\n";
+          llvm::errs() << "ParseArgs: Qualified name filter is " << filter
+                       << "\n";
       }
     }
     return true;
