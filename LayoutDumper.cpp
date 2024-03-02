@@ -51,11 +51,16 @@ public:
       std::string qualifiedName = RD->getQualifiedNameAsString();
       if (filter != "" && qualifiedName.find(filter) == std::string::npos)
         return;
-      // Temporary workaround for
-      // https://github.com/llvm/llvm-project/issues/83671
+      // Temporary workaround
       if (CXXRecordDecl *CRD = llvm::dyn_cast<CXXRecordDecl>(RD)) {
+        // For https://github.com/llvm/llvm-project/issues/83671
         for (auto &base : CRD->bases()) {
           if (base.getType()->getAsCXXRecordDecl() == nullptr)
+            return;
+        }
+        // For https://github.com/llvm/llvm-project/issues/83684
+        for (const auto &field: CRD->fields()) {
+          if (field->getType()->isDependentType())
             return;
         }
       }
