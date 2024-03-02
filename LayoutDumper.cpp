@@ -50,7 +50,9 @@ public:
     Visitor() {}
 
     bool VisitRecordDecl(RecordDecl *RD) {
-      RecordDeclSet.insert(RD);
+      RD = RD->getDefinition();
+      if (RD && !RD->isInvalidDecl() && RD->isCompleteDefinition())
+        RecordDeclSet.insert(RD);
       return true;
     }
   };
