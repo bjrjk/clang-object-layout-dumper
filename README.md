@@ -29,8 +29,10 @@ autoninja
 ## Run
 
 ```bash
+# -Xclang -plugin: Use the named plugin action instead of the default action
+# -Xclang -add-plugin: Use the named plugin action in addition to the default action
 bin/clang++ \
-  -Xclang -load -Xclang lib/LayoutDumper.so -Xclang -plugin -Xclang layout_dump \
+  -Xclang -load -Xclang lib/LayoutDumper.so -Xclang -add-plugin -Xclang layout_dump \
   -fplugin-arg-layout_dump-[ARG1] -fplugin-arg-layout_dump-[ARG2] ... -fplugin-arg-layout_dump-[ARGn] \
   test.cpp
 ```
