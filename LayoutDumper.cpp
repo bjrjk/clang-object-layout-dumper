@@ -37,11 +37,11 @@ namespace {
 
 class LayoutDumpConsumer : public ASTConsumer {
   CompilerInstance &Instance;
-  std::map<std::string, std::string> &ParsedArgs;
+  std::map<std::string, std::string> ParsedArgs;
 
 public:
   LayoutDumpConsumer(CompilerInstance &Instance,
-                     std::map<std::string, std::string> &ParsedArgs)
+                     std::map<std::string, std::string> ParsedArgs)
       : Instance(Instance), ParsedArgs(ParsedArgs) {}
 
   void HandleTagDeclDefinition(TagDecl *D) override {
